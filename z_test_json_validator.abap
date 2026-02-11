@@ -32,6 +32,7 @@ AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_fpath.
 START-OF-SELECTION.
 
   DATA: lv_json_string TYPE string,
+        lv_formatted_json type string,
         ls_result      TYPE zcl_json_validator=>ty_validation_result,
         ls_error       TYPE zcl_json_validator=>ty_validation_error.
 
@@ -144,6 +145,30 @@ START-OF-SELECTION.
   WRITE: / '-------------------------------------------'.
   zcl_json_validator=>validate_and_display( lv_json_string ).
 
+  SKIP 2.
+  WRITE: / 'Alternative method using format_and_validate:'.
+  WRITE: / '-------------------------------------------'.
+  zcl_json_validator=>format_and_validate(
+  EXPORTING iv_json_string    = lv_json_string
+  IMPORTING ev_formatted_json = lv_formatted_json
+  RECEIVING rs_result         = ls_result ).
+  IF ls_result-is_valid = abap_true.
+    WRITE: / '✓ JSON IS VALID!'.
+    WRITE: / ls_result-message.
+    WRITE: lv_formatted_json.
+  ELSE.
+    WRITE: / '✗ JSON VALIDATION FAILED'.
+    WRITE: / ls_result-message.
+    SKIP.
+    WRITE: / 'Errors found:'.
+    WRITE: / '-------------------------------------------'.
+
+    LOOP AT ls_result-errors INTO ls_error.
+      WRITE: / |Line { ls_error-line_number WIDTH = 4 ALIGN = RIGHT }, |,
+               |Col { ls_error-column WIDTH = 4 ALIGN = RIGHT }: |,
+               |[{ ls_error-severity }] { ls_error-message }|.
+    ENDLOOP.
+  ENDIF.
 *&---------------------------------------------------------------------*
 *& Form f4_file_path
 *&---------------------------------------------------------------------*
